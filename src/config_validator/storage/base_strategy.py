@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 from pathlib import Path
-
+from typing import List
 
 class StorageStrategy(ABC):
     """Abstract base class for storage backend implementations."""
@@ -96,3 +96,17 @@ class StorageStrategy(ABC):
             ValueError: If required configuration is missing
         """
         pass
+
+    @abstractmethod
+    def get_yaml_files(root: Path) -> List[Path]:
+        """
+        Get all YAML files in the remote storage.
+        
+        Args:
+            root: Root directory or path to scan
+        
+        Returns:
+            List of Path objects for discovered YAML files
+        """
+        pass
+    

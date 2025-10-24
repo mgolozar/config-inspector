@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 
 
-from config_validator.core.validator import validate_file
+from config_validator.core.validator import Validator
 
 
 
@@ -24,7 +24,7 @@ from config_validator.core.validator import validate_file
 #         )
 
 
-#     res = validate_file(f)
+#     res = Validator.validate_file(f)
 #     assert res["valid"] is True
 #     assert res["errors"] == []
 #     assert res["registry"] == "myregistry.com"
@@ -46,7 +46,7 @@ def test_validate_core_errors(tmp_path: Path) -> None:
         )
 
 
-    res = validate_file(f)
+    res = Validator.validate_file(f)
      
     assert res["valid"] is False
     # should include replicas range, image format, env uppercase errors

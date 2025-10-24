@@ -1,9 +1,10 @@
 """Local file system storage strategy implementation."""
 
 import logging
+import os
 import shutil
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Iterable, List
 
 from .base_strategy import StorageStrategy
 
@@ -13,6 +14,11 @@ logger = logging.getLogger(__name__)
 
 class LocalStrategy(StorageStrategy):
     """Storage strategy for local file system operations."""
+    
+    # Excluded directories when scanning file system
+    EXCLUDED_DIRS = {'.git', 'node_modules', '.idea', '.venv', '__pycache__'}
+    # Excluded file extensions
+    EXCLUDED_EXTS = {'.zip', '.tar', '.gz', '.rar'}
     
     def __init__(self, config: Dict[str, Any]) -> None:
         """
@@ -130,3 +136,41 @@ class LocalStrategy(StorageStrategy):
         if not base_path:
             raise ValueError("LocalStrategy requires 'base_path' in configuration")
         return True
+    
+    @staticmethod
+    def fast_walk(root: Path) -> Iterable[Path]:
+        """Yield all files under root (non-recursive stack, no symlinks)."""
+        stack = [root]
+        while stack:
+            d = stack.pop()
+            try:
+                with os.scandir(d) as it:
+                    for entry in it:
+                        if entry.is_dir(follow_symlinks=False):
+                            if entry.name in LocalStrategy.EXCLUDED_DIRS:
+                                continue
+                            stack.append(Path(entry.path))
+                        # Files (and only files)
+                        elif not entry.is_file(follow_symlinks=False):
+                            continue    
+                        else:
+                            p = Path(entry.path)
+                            if p.suffix.lower() in LocalStrategy.EXCLUDED_EXTS:
+                                continue
+                            yield p
+            except (PermissionError, FileNotFoundError):
+                continue
+    
+    @staticmethod
+    def get_yaml_files(root: Path) -> Iterable[Path]:
+        """Yield only YAML files discovered by fast_walk."""
+        for p in LocalStrategy.fast_walk(root):
+            if p.suffix.lower() in {'.yml', '.yaml'}:
+                yield p
+    
+    @staticmethod
+    def discover_yaml_files(root: Path) -> List[Path]:
+        """Discover all YAML files in directory tree."""
+        unique = sorted({p.resolve() for p in LocalStrategy.get_yaml_files(root)})
+        return list(unique)
+  

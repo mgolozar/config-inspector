@@ -8,12 +8,13 @@ from pathlib import Path
 from typing import Any
 
 
-from .core.discovery import discover_yaml_files
-from .core.validator import validate_file
+from .core.discovery import Discovery
+from .storage.local_strategy import LocalStrategy
+from .core.validator import Validator   
 from .core.report import aggregate_and_summarize
 from .core.watcher import watch_polling
 from .core.config import load_validation_config
-from .utils.logging_setup import configure_logging
+from .utils.logging_setup import configure_logging  
 
 
 logger = logging.getLogger(__name__)
@@ -46,7 +47,7 @@ def run_once(root: Path, report_path: Path, config_path: Path = None, replicas_m
     # from concurrent.futures import as_completed
 
     # executor = BoundedExecutor(max_workers=16, max_queue=512)
-    # futs = [executor.submit(validate_file, p, config) for p in iter_yaml_files(root)]
+    # futs = [executor.submit(Validator.validate_file, p, config) for p in iter_yaml_files(root)]
 
     # results = []
     # for fut in as_completed(futs):
@@ -55,11 +56,13 @@ def run_once(root: Path, report_path: Path, config_path: Path = None, replicas_m
     # executor.shutdown()
     # logger.info("Processed %d YAML files", len(results))
 
+    discovery = Discovery(root, LocalStrategy({
+        'base_path': str(root)
+    }))
 
-
-    files = discover_yaml_files(root)
+    files = discovery.discover_yaml_files(root)
     logger.info("Discovered %d YAML files", len(files))
-    results = [validate_file(p, config) for p in files]
+    results = [Validator.validate_file(p, config) for p in files]
     report = aggregate_and_summarize(results)
     report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
     logger.info("Report written to %s", report_path)
