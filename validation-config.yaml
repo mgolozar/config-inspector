@@ -1,0 +1,32 @@
+# Default validation configuration
+# This file defines the validation rules for your YAML configurations
+
+# Replicas validation range
+replicas_min: 1
+replicas_max: 50
+
+# Image pattern validation (regex)
+image_pattern: "^(?P<registry>[\\w.-]+(?::\\d+)?)/(?P<service>[\\w.-]+):(?P<version>[\\w.-]+)$"
+
+# Required fields that must be present
+required_fields:
+  - service
+  - image
+  - replicas
+
+# Environment variable key case requirements
+# Options: UPPERCASE, lowercase, any
+env_key_case: "UPPERCASE"
+
+# Custom validation rules (advanced)
+custom_rules:
+  - field: "service"
+    rule_type: "regex"
+    pattern: "^[a-z0-9-]+$"
+    error_message: "Service name must contain only lowercase letters, numbers, and hyphens"
+  
+  - field: "replicas"
+    rule_type: "range"
+    min_value: 1
+    max_value: 10
+    error_message: "Replicas must be between 1 and 10 for this environment"

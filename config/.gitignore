@@ -1,0 +1,7 @@
+# User configuration files (may contain secrets)
+*.yaml
+!examples/
+!templates/
+
+# Storage directories
+storage/

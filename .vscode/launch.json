@@ -1,0 +1,33 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug config-validator (path and report path)",
+            "type": "python",
+            "request": "launch",
+            "module": "config_validator",
+            "args": [
+                "--path",
+                "${input:rootPath}",
+                "--report",
+                "${input:reportPath}"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ],
+    "inputs": [
+        {
+            "id": "rootPath",
+            "type": "promptString",
+            "description": "Root path for YAML files",
+            "default": "C:\\mydrive\\My Data\\Myproj\\Test-Project\\Stillfront\\test-plugin"
+        },
+        {
+            "id": "reportPath",
+            "type": "promptString",
+            "description": "Report path",
+            "default": "C:\\report.json"
+        }
+    ]
+}

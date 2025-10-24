@@ -1,0 +1,27 @@
+# Production validation configuration
+# Stricter rules for production environments
+
+replicas_min: 2
+replicas_max: 20
+
+image_pattern: "^(?P<registry>[\\w.-]+(?::\\d+)?)/(?P<service>[\\w.-]+):(?P<version>[\\w.-]+)$"
+
+required_fields:
+  - service
+  - image
+  - replicas
+  - env
+
+env_key_case: "UPPERCASE"
+
+custom_rules:
+  - field: "service"
+    rule_type: "regex"
+    pattern: "^[a-z0-9-]+$"
+    error_message: "Service name must contain only lowercase letters, numbers, and hyphens"
+  
+  - field: "replicas"
+    rule_type: "range"
+    min_value: 2
+    max_value: 20
+    error_message: "Production requires at least 2 replicas, maximum 20"

@@ -1,0 +1,132 @@
+"""Local file system storage strategy implementation."""
+
+import logging
+import shutil
+from pathlib import Path
+from typing import Any, Dict
+
+from .base_strategy import StorageStrategy
+
+
+logger = logging.getLogger(__name__)
+
+
+class LocalStrategy(StorageStrategy):
+    """Storage strategy for local file system operations."""
+    
+    def __init__(self, config: Dict[str, Any]) -> None:
+        """
+        Initialize local storage strategy.
+        
+        Args:
+            config: Configuration containing 'base_path' for root directory
+        
+        Raises:
+            ValueError: If base_path is not provided or is invalid
+        """
+        super().__init__(config)
+        self.validate_config()
+        self.base_path = Path(self.config.get("base_path", "."))
+        self.base_path.mkdir(parents=True, exist_ok=True)
+        logger.info(f"LocalStrategy initialized with base_path: {self.base_path}")
+    
+    def upload(self, local_path: Path, remote_path: str) -> bool:
+        """Copy file from local path to base_path directory."""
+        try:
+            local_path = Path(local_path)
+            if not local_path.exists():
+                logger.error(f"Local file not found: {local_path}")
+                return False
+            
+            dest_path = self.base_path / remote_path
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            if local_path.is_file():
+                shutil.copy2(local_path, dest_path)
+            else:
+                shutil.copytree(local_path, dest_path, dirs_exist_ok=True)
+            
+            logger.info(f"Uploaded {local_path} to {dest_path}")
+            return True
+        except Exception as e:
+            logger.error(f"Upload failed: {e}")
+            return False
+    
+    def download(self, remote_path: str, local_path: Path) -> bool:
+        """Copy file from base_path directory to local path."""
+        try:
+            source_path = self.base_path / remote_path
+            local_path = Path(local_path)
+            
+            if not source_path.exists():
+                logger.error(f"Remote file not found: {source_path}")
+                return False
+            
+            local_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            if source_path.is_file():
+                shutil.copy2(source_path, local_path)
+            else:
+                shutil.copytree(source_path, local_path, dirs_exist_ok=True)
+            
+            logger.info(f"Downloaded {source_path} to {local_path}")
+            return True
+        except Exception as e:
+            logger.error(f"Download failed: {e}")
+            return False
+    
+    def exists(self, remote_path: str) -> bool:
+        """Check if file exists in base_path directory."""
+        path = self.base_path / remote_path
+        exists = path.exists()
+        logger.debug(f"Checking existence of {path}: {exists}")
+        return exists
+    
+    def delete(self, remote_path: str) -> bool:
+        """Delete file from base_path directory."""
+        try:
+            path = self.base_path / remote_path
+            
+            if not path.exists():
+                logger.error(f"Remote file not found: {path}")
+                return False
+            
+            if path.is_file():
+                path.unlink()
+            else:
+                shutil.rmtree(path)
+            
+            logger.info(f"Deleted {path}")
+            return True
+        except Exception as e:
+            logger.error(f"Deletion failed: {e}")
+            return False
+    
+    def list_files(self, prefix: str = "") -> list[str]:
+        """List files in base_path directory with optional prefix filter."""
+        try:
+            files = []
+            search_path = self.base_path
+            
+            if prefix:
+                search_path = self.base_path / prefix
+                if not search_path.exists():
+                    return []
+            
+            for item in search_path.rglob("*"):
+                if item.is_file():
+                    rel_path = item.relative_to(self.base_path)
+                    files.append(str(rel_path))
+            
+            logger.info(f"Listed {len(files)} files with prefix '{prefix}'")
+            return sorted(files)
+        except Exception as e:
+            logger.error(f"List files failed: {e}")
+            return []
+    
+    def validate_config(self) -> bool:
+        """Validate that base_path is configured."""
+        base_path = self.config.get("base_path")
+        if not base_path:
+            raise ValueError("LocalStrategy requires 'base_path' in configuration")
+        return True

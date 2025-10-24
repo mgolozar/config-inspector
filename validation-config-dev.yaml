@@ -1,0 +1,20 @@
+# Development validation configuration
+# More relaxed rules for development environments
+
+replicas_min: 1
+replicas_max: 5
+
+image_pattern: "^(?P<registry>[\\w.-]+(?::\\d+)?)/(?P<service>[\\w.-]+):(?P<version>[\\w.-]+)$"
+
+required_fields:
+  - service
+  - image
+  - replicas
+
+env_key_case: "any"  # Allow any case in development
+
+custom_rules:
+  - field: "service"
+    rule_type: "regex"
+    pattern: "^[a-zA-Z0-9_-]+$"
+    error_message: "Service name must contain only letters, numbers, underscores, and hyphens"
