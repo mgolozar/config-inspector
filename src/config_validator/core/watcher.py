@@ -9,7 +9,7 @@ from typing import Callable, Dict
 
 
 def _snapshot(root: Path) -> Dict[str, float]:
-    """Return {absolute_path: mtime} for .yml/.yaml files."""
+
     mtimes: dict[str, float] = {}
     for pat in ("**/*.yml", "**/*.yaml"):
         for p in root.glob(pat):
@@ -23,11 +23,7 @@ def _snapshot(root: Path) -> Dict[str, float]:
 
 
 def watch_polling(root: Path, on_change: Callable[[], None], interval: float = 1.0) -> None:
-    """Simple portable polling watcher.
 
-
-    Calls `on_change()` on initial run and whenever any YAML file changes.
-    """
     prev = {}
     on_change() # initial
     while True:

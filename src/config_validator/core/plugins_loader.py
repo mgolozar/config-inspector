@@ -17,13 +17,7 @@ _DEF_PKG = "config_validator.plugins"
 
 
 def load_plugins() -> List[ValidationPlugin]:
-    """Dynamically discover and instantiate plugins in `config_validator.plugins`.
 
-
-    - Scans package modules
-    - Finds subclasses of ValidationPlugin
-    - Instantiates with no-arg constructor
-    """
     plugins: list[ValidationPlugin] = []
     pkg = importlib.import_module(_DEF_PKG)
     for m in pkgutil.iter_modules(pkg.__path__, prefix=f"{_DEF_PKG}."):

@@ -168,9 +168,12 @@ class LocalStrategy(StorageStrategy):
             if p.suffix.lower() in {'.yml', '.yaml'}:
                 yield p
     
-    @staticmethod
+    
     def discover_yaml_files(root: Path) -> List[Path]:
         """Discover all YAML files in directory tree."""
         unique = sorted({p.resolve() for p in LocalStrategy.get_yaml_files(root)})
-        return list(unique)
-  
+        return list(unique)  
+    def read_file(self, remote_path: str) -> str:
+        file_path = self.base_path / remote_path
+        with file_path.open("r", encoding="utf-8") as f:
+            return f.read()

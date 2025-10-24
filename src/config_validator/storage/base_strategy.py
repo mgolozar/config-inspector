@@ -109,4 +109,9 @@ class StorageStrategy(ABC):
             List of Path objects for discovered YAML files
         """
         pass
+
+    @abstractmethod
+    def read_file(self, remote_path: str) -> str:
+        """Read file content as string from storage backend"""
+        pass
     
