@@ -10,7 +10,8 @@
                 "--path",
                 "${input:rootPath}",
                 "--report",
-                "${input:reportPath}"
+                "${input:reportPath}",
+                "--watch"
             ],
             "console": "integratedTerminal",
             "justMyCode": true

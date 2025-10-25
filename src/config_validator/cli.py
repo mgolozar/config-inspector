@@ -109,17 +109,18 @@ def main(argv: list[str] | None = None) -> int:
     _setup_logging(args.verbose)
 
     if args.watch:
+        run_once(
+            args.path,
+            args.report,
+            args.config,
+            args.storage_config,
+            args.replicas_min,
+            args.replicas_max,
+        )
         watch_polling(
             args.path,
-            lambda: run_once(
-                args.path,
-                args.report,
-                args.config,
-                args.storage_config,
-                args.replicas_min,
-                args.replicas_max,
-            )
-        )
+           lambda: print("Watching files...")
+ )
         return 0
     else:
         run_once(

@@ -16,6 +16,7 @@ authors = [
 
 dependencies = [
 "PyYAML>=6.0",
+"watchdog>=4.0",
 ]
 
 
