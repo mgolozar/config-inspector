@@ -3,12 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
 import yaml
 
 
 @dataclass
 class ValidationRule:
- 
+    """Represents a single validation rule."""
+
     field: str
     rule_type: str  # 'range', 'regex', 'required', 'enum', etc.
     min_value: Optional[int] = None
@@ -20,15 +22,17 @@ class ValidationRule:
 
 @dataclass
 class ValidationConfig:
- 
+    """Configuration for validation rules and settings."""
+
     replicas_min: int = 1
     replicas_max: int = 50
     image_pattern: str = r"^(?P<registry>[\w.-]+(?::\d+)?)/(?P<service>[\w.-]+):(?P<version>[\w.-]+)$"
     required_fields: List[str] = None
     env_key_case: str = "UPPERCASE"  # UPPERCASE, lowercase, any
     custom_rules: List[ValidationRule] = None
-    
-    def __post_init__(self):
+
+    def __post_init__(self) -> None:
+        """Initialize default values after dataclass creation."""
         if self.required_fields is None:
             self.required_fields = ["service", "image", "replicas"]
         if self.custom_rules is None:
@@ -36,7 +40,7 @@ class ValidationConfig:
 
 
 def load_validation_config(config_path: Optional[Path] = None) -> ValidationConfig:
- 
+    """Load validation configuration from YAML file or return defaults."""
     if config_path and config_path.exists():
         with config_path.open("r", encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
@@ -56,7 +60,7 @@ def load_validation_config(config_path: Optional[Path] = None) -> ValidationConf
 
 
 def save_validation_config(config: ValidationConfig, config_path: Path) -> None:
- 
+    """Save validation configuration to YAML file."""
     data = {
         "replicas_min": config.replicas_min,
         "replicas_max": config.replicas_max,

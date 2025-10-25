@@ -57,12 +57,20 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.watch:
         # Run initial validation
-        validation_service.run_validation()
+        try:
+            validation_service.run_validation()
+        except Exception as e:
+            logger.error("Validation failed: %s", e)
+            return 1
         
         # Start watching for changes with efficient incremental validation
         watch_with_validation_service(validation_service)
         return 0
     else:
         # Run single validation
-        validation_service.run_validation()
-        return 0
+        try:
+            validation_service.run_validation()
+            return 0
+        except Exception as e:
+            logger.error("Validation failed: %s", e)
+            return 1

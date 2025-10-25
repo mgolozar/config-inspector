@@ -134,8 +134,51 @@ class ValidationService:
         current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
         dynamic_report_path = self.report_path.parent / f"Report{current_time}.json"
         
-        dynamic_report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
-        logger.info("Report written to %s", dynamic_report_path)
+        try:
+            # Ensure parent directory exists
+            dynamic_report_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Write the report file
+            dynamic_report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+            logger.info("Report written to %s", dynamic_report_path)
+            
+        except PermissionError as e:
+            logger.error("Permission denied when writing report to %s: %s", dynamic_report_path, e)
+            
+            # Try to write to a fallback location (current working directory)
+            fallback_path = Path.cwd() / f"Report{current_time}.json"
+            try:
+                fallback_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+                logger.info("Report written to fallback location: %s", fallback_path)
+            except PermissionError as fallback_error:
+                logger.error("Permission denied for fallback location %s: %s", fallback_path, fallback_error)
+                
+                # Try to write to temp directory
+                import tempfile
+                temp_dir = Path(tempfile.gettempdir())
+                temp_report_path = temp_dir / f"config-validator-report-{current_time}.json"
+                try:
+                    temp_report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+                    logger.info("Report written to temporary location: %s", temp_report_path)
+                except Exception as temp_error:
+                    logger.error("Failed to write report to any location: %s", temp_error)
+                    raise RuntimeError(f"Unable to write report file. Tried: {dynamic_report_path}, {fallback_path}, {temp_report_path}")
+                    
+        except OSError as e:
+            logger.error("OS error when writing report to %s: %s", dynamic_report_path, e)
+            
+            # Try fallback to current directory
+            fallback_path = Path.cwd() / f"Report{current_time}.json"
+            try:
+                fallback_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+                logger.info("Report written to fallback location: %s", fallback_path)
+            except Exception as fallback_error:
+                logger.error("Failed to write report to fallback location: %s", fallback_error)
+                raise RuntimeError(f"Unable to write report file: {e}")
+                
+        except Exception as e:
+            logger.error("Unexpected error when writing report: %s", e)
+            raise
 
     def print_summary(self, report: dict[str, Any]) -> None:
 
