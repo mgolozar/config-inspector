@@ -5,8 +5,6 @@ from typing import Any, Dict, Optional
 
 from .base_strategy import StorageStrategy
 from .local_strategy import LocalStrategy
-from .s3_strategy import S3Strategy
-from .hdfs_strategy import HDFSStrategy
 
 
 logger = logging.getLogger(__name__)
@@ -14,8 +12,6 @@ logger = logging.getLogger(__name__)
 # Registry of available storage strategies
 STRATEGIES: Dict[str, type] = {
     "local": LocalStrategy,
-    "s3": S3Strategy,
-    "hdfs": HDFSStrategy,
 }
 
 

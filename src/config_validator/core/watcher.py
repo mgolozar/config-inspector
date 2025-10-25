@@ -47,19 +47,44 @@ class BatchedEventHandler(PatternMatchingEventHandler):
         self.callback = callback
         self.debounce_ms = debounce_ms
 
-        # Thread-safe collections for batching events
+         
         self._lock = threading.Lock()
         self._changed_files: set[str] = set()
         self._deleted_files: set[str] = set()
         self._timer: threading.Timer | None = None
+        
+         
+        self._file_hashes: dict[str, str] = {}
+
+    def _has_file_content_changed(self, file_path: str) -> bool:
+        """Check if file content has actually changed by comparing hashes."""
+        try:
+            import hashlib
+            path = Path(file_path)
+            if not path.exists():
+                return False
+                
+             
+            with path.open('rb') as f:
+                current_hash = hashlib.md5(f.read()).hexdigest()
+            
+             
+            old_hash = self._file_hashes.get(file_path)
+            if old_hash != current_hash:
+                self._file_hashes[file_path] = current_hash
+                return True
+            return False
+        except Exception:
+             
+            return True
 
     def _schedule_batch_callback(self) -> None:
         with self._lock:
-            # Cancel any existing timer
+             
             if self._timer is not None:
                 self._timer.cancel()
 
-            # Schedule new timer
+             
             self._timer = threading.Timer(
                 self.debounce_ms / 1000.0,
                 self._process_batch,
@@ -88,31 +113,37 @@ class BatchedEventHandler(PatternMatchingEventHandler):
     def on_created(self, event) -> None:
  
         if not event.is_directory:
-            with self._lock:
-                self._changed_files.add(event.src_path)
-            self._schedule_batch_callback()
+             
+            if self._has_file_content_changed(event.src_path):
+                with self._lock:
+                    self._changed_files.add(event.src_path)
+                self._schedule_batch_callback()
 
     def on_modified(self, event) -> None:
         """Handle file modification events."""
         if not event.is_directory:
-            with self._lock:
-                self._changed_files.add(event.src_path)
-            self._schedule_batch_callback()
+             
+            if self._has_file_content_changed(event.src_path):
+                with self._lock:
+                    self._changed_files.add(event.src_path)
+                self._schedule_batch_callback()
 
     def on_moved(self, event) -> None:
         """Handle file move/rename events."""
         if not event.is_directory:
             with self._lock:
-                # Treat moves as deletions of source + creation of destination
+                 
                 self._deleted_files.add(event.src_path)
-                self._changed_files.add(event.dest_path)
+                 
+                if self._has_file_content_changed(event.dest_path):
+                    self._changed_files.add(event.dest_path)
             self._schedule_batch_callback()
 
     def on_deleted(self, event) -> None:
         """Handle file deletion events."""
         if not event.is_directory:
             with self._lock:
-                # Remove from changed set if present, add to deleted set
+                 
                 self._changed_files.discard(event.src_path)
                 self._deleted_files.add(event.src_path)
             self._schedule_batch_callback()
@@ -127,10 +158,10 @@ def run_watch(
  
     root_path = Path(root_path).resolve()
 
-    # Create thread pool executor for parallel processing
+    
     executor = ThreadPoolExecutor(max_workers=workers)
 
-    # Create event handler with batch callback
+     
     def batch_callback(changed: set[str], deleted: set[str]) -> None:
  
         executor.submit(callback, changed, deleted)
@@ -140,7 +171,7 @@ def run_watch(
         debounce_ms=debounce_ms,
     )
 
-    # Create and start observer
+     
     observer = Observer()
     observer.schedule(event_handler, str(root_path), recursive=True)
     observer.start()
@@ -149,7 +180,7 @@ def run_watch(
     log.info("Listening for *.yaml and *.yml files")
 
     try:
-        # Keep the main thread alive
+         
         while True:
             observer.join(timeout=1)
             if not observer.is_alive():
@@ -163,14 +194,6 @@ def run_watch(
         log.info("Thread pool executor shut down")
 
 
-def watch_polling(root: Path, on_change: Callable[[], None]) -> None:
- 
-    def batch_callback(changed: set[str], deleted: set[str]) -> None:
- 
-        if changed or deleted:
-            on_change()
-
-    run_watch(root, batch_callback)
 
 
 def watch_with_validation_service(

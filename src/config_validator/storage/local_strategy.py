@@ -2,7 +2,6 @@
 
 import logging
 import os
-import shutil
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
@@ -36,99 +35,6 @@ class LocalStrategy(StorageStrategy):
         self.base_path.mkdir(parents=True, exist_ok=True)
         logger.info(f"LocalStrategy initialized with base_path: {self.base_path}")
     
-    def upload(self, local_path: Path, remote_path: str) -> bool:
-        """Copy file from local path to base_path directory."""
-        try:
-            local_path = Path(local_path)
-            if not local_path.exists():
-                logger.error(f"Local file not found: {local_path}")
-                return False
-            
-            dest_path = self.base_path / remote_path
-            dest_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            if local_path.is_file():
-                shutil.copy2(local_path, dest_path)
-            else:
-                shutil.copytree(local_path, dest_path, dirs_exist_ok=True)
-            
-            logger.info(f"Uploaded {local_path} to {dest_path}")
-            return True
-        except Exception as e:
-            logger.error(f"Upload failed: {e}")
-            return False
-    
-    def download(self, remote_path: str, local_path: Path) -> bool:
-        """Copy file from base_path directory to local path."""
-        try:
-            source_path = self.base_path / remote_path
-            local_path = Path(local_path)
-            
-            if not source_path.exists():
-                logger.error(f"Remote file not found: {source_path}")
-                return False
-            
-            local_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            if source_path.is_file():
-                shutil.copy2(source_path, local_path)
-            else:
-                shutil.copytree(source_path, local_path, dirs_exist_ok=True)
-            
-            logger.info(f"Downloaded {source_path} to {local_path}")
-            return True
-        except Exception as e:
-            logger.error(f"Download failed: {e}")
-            return False
-    
-    def exists(self, remote_path: str) -> bool:
-        """Check if file exists in base_path directory."""
-        path = self.base_path / remote_path
-        exists = path.exists()
-        logger.debug(f"Checking existence of {path}: {exists}")
-        return exists
-    
-    def delete(self, remote_path: str) -> bool:
-        """Delete file from base_path directory."""
-        try:
-            path = self.base_path / remote_path
-            
-            if not path.exists():
-                logger.error(f"Remote file not found: {path}")
-                return False
-            
-            if path.is_file():
-                path.unlink()
-            else:
-                shutil.rmtree(path)
-            
-            logger.info(f"Deleted {path}")
-            return True
-        except Exception as e:
-            logger.error(f"Deletion failed: {e}")
-            return False
-    
-    def list_files(self, prefix: str = "") -> list[str]:
-        """List files in base_path directory with optional prefix filter."""
-        try:
-            files = []
-            search_path = self.base_path
-            
-            if prefix:
-                search_path = self.base_path / prefix
-                if not search_path.exists():
-                    return []
-            
-            for item in search_path.rglob("*"):
-                if item.is_file():
-                    rel_path = item.relative_to(self.base_path)
-                    files.append(str(rel_path))
-            
-            logger.info(f"Listed {len(files)} files with prefix '{prefix}'")
-            return sorted(files)
-        except Exception as e:
-            logger.error(f"List files failed: {e}")
-            return []
     
     def validate_config(self) -> bool:
         """Validate that base_path is configured."""
@@ -163,15 +69,11 @@ class LocalStrategy(StorageStrategy):
     
     @staticmethod
     def get_yaml_files(root: Path) -> Iterable[Path]:
-        """Yield only YAML files discovered by fast_walk, relative to root."""
+        """Yield only YAML files discovered by fast_walk, as absolute paths."""
         for p in LocalStrategy.fast_walk(root):
             if p.suffix.lower() in {'.yml', '.yaml'}:
-                # Return path relative to root
-                try:
-                    yield p.relative_to(root)
-                except ValueError:
-                    # If path is not relative to root, use as-is
-                    yield p
+                # Return absolute path
+                yield p.resolve()
     
     
     def discover_yaml_files(root: Path) -> List[Path]:
@@ -179,6 +81,7 @@ class LocalStrategy(StorageStrategy):
         unique = sorted({p for p in LocalStrategy.get_yaml_files(root)})
         return list(unique)  
     def read_file(self, remote_path: str) -> str:
-        file_path = self.base_path / remote_path
+        # remote_path is now always an absolute path from discovery
+        file_path = Path(remote_path)
         with file_path.open("r", encoding="utf-8") as f:
             return f.read()

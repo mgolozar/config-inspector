@@ -28,7 +28,7 @@ class ValidationConfig:
     replicas_max: int = 50
     image_pattern: str = r"^(?P<registry>[\w.-]+(?::\d+)?)/(?P<service>[\w.-]+):(?P<version>[\w.-]+)$"
     required_fields: List[str] = None
-    env_key_case: str = "UPPERCASE"  # UPPERCASE, lowercase, any
+    env_key_case: str = "UPPERCASE"   
     custom_rules: List[ValidationRule] = None
 
     def __post_init__(self) -> None:

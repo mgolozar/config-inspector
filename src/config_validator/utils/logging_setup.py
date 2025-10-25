@@ -14,14 +14,7 @@ _LEVELS = {
 
 
 def configure_logging(level: str = "INFO", log_file: str = None) -> None:
-    """
-    Configure logging to output to both console and file.
-    
-    Args:
-        level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        log_file: Optional log file path. If None, logs to console only.
-                  If provided, logs to both console and file.
-    """
+ 
     lvl = _LEVELS.get(level.upper(), logging.INFO)
     
     # Create log file directory if needed
@@ -37,7 +30,7 @@ def configure_logging(level: str = "INFO", log_file: str = None) -> None:
         }
     }
     
-    # Add file handler if log_file is specified
+     
     if log_file:
         handlers_config["file"] = {
             "class": "logging.FileHandler",

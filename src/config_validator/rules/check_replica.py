@@ -19,8 +19,4 @@ class ReplicasInRange(ValidationRule):
         if not isinstance(replicas, int) or not (1 <= replicas <= 10):
             errs.append("replicas must be an integer between 1 and 10")
 
-        # if isinstance(env, dict):
-        #     bad = [k for k, v in env.items() if not isinstance(v, str) or v.strip() == ""]
-        #     if bad:
-        #         errs.append(f"env values must be non-empty strings: {sorted(bad)}")
         return errs

@@ -26,18 +26,16 @@ def load_rules(config=None) -> List[ValidationRule]:
             attr = getattr(module, attr_name)
             try:
                 if isinstance(attr, type) and issubclass(attr, ValidationRule) and attr is not ValidationRule:
-                    # Check if the rule accepts config in its constructor
+                 
                     try:
-                        # Try to instantiate with config first
+                       
                         rule_instance = attr(config) if config is not None else attr()
                     except TypeError:
-                        # If it doesn't accept config, instantiate without it
+                       
                         rule_instance = attr()
                     rules.append(rule_instance)
             except Exception:
-            # Non-class attribute or unrelated type
+           
                 continue
-    print("--------------------------------------------------")        
-    print("rules",rules)
-    print("--------------------------------------------------")
+ 
     return rules

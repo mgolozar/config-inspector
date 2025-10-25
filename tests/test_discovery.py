@@ -32,7 +32,8 @@ def test_discovery_with_local_storage(tmp_path: Path) -> None:
     
     # Verify results
     assert len(yaml_files) == 4
-    yaml_paths = {str(p).replace("\\", "/") for p in yaml_files}
+    # Convert to relative paths for comparison
+    yaml_paths = {str(p.relative_to(tmp_path)).replace("\\", "/") for p in yaml_files}
     expected_paths = {
         "service1.yaml",
         "service2.yml", 
@@ -76,7 +77,8 @@ def test_discovery_with_nested_directories(tmp_path: Path) -> None:
     yaml_files = discovery.discover_yaml_files(tmp_path)
     
     assert len(yaml_files) == 5
-    yaml_paths = {str(p).replace("\\", "/") for p in yaml_files}
+    # Convert to relative paths for comparison
+    yaml_paths = {str(p.relative_to(tmp_path)).replace("\\", "/") for p in yaml_files}
     expected_paths = {
         "root.yaml",
         "level1/service1.yaml",

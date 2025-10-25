@@ -23,14 +23,14 @@ class CheckCore(ValidationRule):
         try:
             logger.debug(f"Starting core validation. Data type: {type(data)}")
             
-            # Check if data is actually a dictionary
+             
             if not isinstance(data, dict):
                 error_msg = f"Configuration must be a dictionary, got {type(data).__name__}"
                 logger.warning(error_msg)
                 errors.append(error_msg)
                 return errors
 
-            # Check required fields
+             
             try:
                 missing = set(self.config.required_fields) - data.keys()
                 if missing:
@@ -42,7 +42,7 @@ class CheckCore(ValidationRule):
                 logger.error(error_msg, exc_info=True)
                 errors.append(error_msg)
 
-            # Replicas validation with configurable range
+             
             try:
                 rep = data.get("replicas")
                 if not isinstance(rep, int) or not (self.config.replicas_min <= rep <= self.config.replicas_max):
@@ -56,7 +56,7 @@ class CheckCore(ValidationRule):
                 logger.error(error_msg, exc_info=True)
                 errors.append(error_msg)
 
-            # Image validation with configurable pattern
+             
             try:
                 img = data.get("image")
                 if not isinstance(img, str):
@@ -76,7 +76,7 @@ class CheckCore(ValidationRule):
                 logger.error(error_msg, exc_info=True)
                 errors.append(error_msg)
 
-            # Environment variables validation with configurable case requirements
+             
             try:
                 env = data.get("env", {})
                 if env and isinstance(env, dict):

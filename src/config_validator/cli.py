@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 def _setup_logging(verbose: bool) -> None:
     level = "DEBUG" if verbose else "INFO"
     
-    # Create logs directory explicitly
+     
     log_dir = Path("logs")
     log_dir.mkdir(exist_ok=True)
     
@@ -56,18 +56,18 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     if args.watch:
-        # Run initial validation
+         
         try:
             validation_service.run_validation()
         except Exception as e:
             logger.error("Validation failed: %s", e)
             return 1
         
-        # Start watching for changes with efficient incremental validation
+         
         watch_with_validation_service(validation_service)
         return 0
     else:
-        # Run single validation
+         
         try:
             validation_service.run_validation()
             return 0

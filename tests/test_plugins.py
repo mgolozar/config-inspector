@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from config_validator.core.validator import ValidationSession
+from config_validator.core.sync_validator import SyncValidator
 from config_validator.core.config import ValidationConfig
 from config_validator.storage.local_strategy import LocalStrategy
-from config_validator.plugins.check_env import EnvValueNotEmpty
+from config_validator.rules.check_env import EnvValueNotEmpty
 
 
 def test_plugin_env_value_not_empty(tmp_path: Path) -> None:
@@ -27,12 +27,12 @@ def test_plugin_env_value_not_empty(tmp_path: Path) -> None:
     # Create test configuration and storage strategy
     config = ValidationConfig()
     storage = LocalStrategy({"base_path": str(tmp_path)})
-    session = ValidationSession(config, storage)
+    validator = SyncValidator(config, storage)
 
-    res = session.validate_file(str(f))
-    assert res["valid"] is False
+    res = validator.validate_file(str(f))
+    assert res.valid is False
     # plugin should flag DATABASE_URL as empty
-    assert any("env values must be non-empty strings" in e for e in res["errors"])
+    assert any("env values must be non-empty strings" in e for e in res.errors)
 
 
 def test_plugin_env_value_valid(tmp_path: Path) -> None:
@@ -53,11 +53,11 @@ def test_plugin_env_value_valid(tmp_path: Path) -> None:
     # Create test configuration and storage strategy
     config = ValidationConfig()
     storage = LocalStrategy({"base_path": str(tmp_path)})
-    session = ValidationSession(config, storage)
+    validator = SyncValidator(config, storage)
 
-    res = session.validate_file(str(f))
+    res = validator.validate_file(str(f))
     # Should be valid since all env values are non-empty
-    assert res["valid"] is True
-    assert not any("env values must be non-empty strings" in e for e in res["errors"])
+    assert res.valid is True
+    assert not any("env values must be non-empty strings" in e for e in res.errors)
 
 

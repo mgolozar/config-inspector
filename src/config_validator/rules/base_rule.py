@@ -16,5 +16,5 @@ class ValidationRule(ABC):
 
 
     @abstractmethod
-    def validate(self, data: dict) -> List[str]: # pragma: no cover - interface only
+    def validate(self, data: dict) -> List[str]:  
         raise NotImplementedError

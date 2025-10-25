@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 
 
-from config_validator.core.validator import ValidationSession
+from config_validator.core.sync_validator import SyncValidator
 from config_validator.core.config import ValidationConfig
 from config_validator.storage.local_strategy import LocalStrategy
 
@@ -28,12 +28,12 @@ def test_validate_happy_path(tmp_path: Path) -> None:
     # Create test configuration and storage strategy
     config = ValidationConfig()
     storage = LocalStrategy({"base_path": str(tmp_path)})
-    session = ValidationSession(config, storage)
+    validator = SyncValidator(config, storage)
 
-    res = session.validate_file(str(f))
-    assert res["valid"] is True
-    assert res["errors"] == []
-    assert res["registry"] == "myregistry.com"
+    res = validator.validate_file(str(f))
+    assert res.valid is True
+    assert res.errors == []
+    assert res.registry == "myregistry.com"
 
 
  
@@ -54,12 +54,12 @@ def test_validate_core_errors(tmp_path: Path) -> None:
     # Create test configuration and storage strategy
     config = ValidationConfig()
     storage = LocalStrategy({"base_path": str(tmp_path)})
-    session = ValidationSession(config, storage)
+    validator = SyncValidator(config, storage)
 
-    res = session.validate_file(str(f))
+    res = validator.validate_file(str(f))
      
-    assert res["valid"] is False
-    errors = res.get("errors", [])
+    assert res.valid is False
+    errors = res.errors
     
     # Check that we have validation errors (the exact errors depend on plugin configuration)
     assert len(errors) > 0

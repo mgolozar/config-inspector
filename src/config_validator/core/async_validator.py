@@ -1,51 +1,84 @@
-# async_validator.py
 from __future__ import annotations
-import asyncio, os, threading
-from pathlib import Path
-from typing import Any, Callable
 
-class AsyncValidator:
+import asyncio
+import logging
+import os
+import threading
+from typing import Any, Callable, List
+
+from .base_validator import BaseValidator, ValidationResult
+
+logger = logging.getLogger(__name__)
+
+
+class AsyncValidator(BaseValidator):
+    """Asynchronous validator that uses a sync validator with thread pool execution."""
+
     def __init__(
         self,
-        session_factory: Callable[[], Any],
-        validate_sync: Callable[[Any, str], Any],
+        config: Any,   
+        storage: Any,  
         max_concurrency: int | None = None,
         per_task_timeout: float | None = 30.0,
-    ):
-        self._session_factory = session_factory
-        self._validate_sync = validate_sync
+    ) -> None:
+        """Initialize async validator with config and storage strategy."""
+        super().__init__(config, storage)
         self._sem = asyncio.Semaphore(max_concurrency or min(32, (os.cpu_count() or 4) * 2))
         self._timeout = per_task_timeout
-        self._thread_local = threading.local()   
+        self._thread_local = threading.local()
+        self._sync_validator: BaseValidator | None = None
 
-     
-    def _get_thread_session(self) -> Any:
-        sess = getattr(self._thread_local, "session", None)
-        if sess is None:
-            sess = self._session_factory()
-            self._thread_local.session = sess
-        return sess
+    def _get_sync_validator(self) -> BaseValidator:
+        """Get or create a thread-local sync validator."""
+        validator = getattr(self._thread_local, "validator", None)
+        if validator is None:
+            
+            from .sync_validator import SyncValidator
+            validator = SyncValidator(self.config, self.storage)
+            self._thread_local.validator = validator
+        return validator
 
-    def _validate_one_sync(self, path: Path) -> Any:
- 
-        sess = self._get_thread_session()
-        return self._validate_sync(sess, str(path))
+    async def _validate_one_async(self, file_path: str) -> ValidationResult:
+        """Validate a single file asynchronously using thread pool."""
+        async with self._sem:  
+            return await asyncio.to_thread(self._validate_one_sync, file_path)
 
-    async def _validate_one_async(self, path: Path) -> Any:
-        async with self._sem:  # bounded concurrency
-      
-            return await asyncio.to_thread(self._validate_one_sync, path)
+    def _validate_one_sync(self, file_path: str) -> ValidationResult:
+        """Validate a single file synchronously (runs in thread pool)."""
+        validator = self._get_sync_validator()
+        return validator.validate_file(file_path)
 
-    async def validate_files(self, files: list[Path]) -> list[Any]:
- 
-        tasks = [asyncio.create_task(self._validate_one_async(p)) for p in files]
+    async def validate_file(self, file_path: str) -> ValidationResult:
+        """Validate a single file asynchronously."""
+        try:
+            return await asyncio.wait_for(
+                self._validate_one_async(file_path), 
+                timeout=self._timeout
+            ) if self._timeout else await self._validate_one_async(file_path)
+        except asyncio.TimeoutError:
+            logger.error(f"Timeout validating {file_path}")
+            return ValidationResult(
+                path=file_path,
+                valid=False,
+                errors=["TIMEOUT"],
+                registry=None,
+                data=None
+            )
+        except Exception as e:
+            logger.error(f"Error validating {file_path}: {e}")
+            return ValidationResult(
+                path=file_path,
+                valid=False,
+                errors=[repr(e)],
+                registry=None,
+                data=None
+            )
 
-        results: list[Any] = [None] * len(files)
-        for i, t in enumerate(tasks):
-            try:
-                results[i] = await asyncio.wait_for(t, timeout=self._timeout) if self._timeout else await t
-            except asyncio.TimeoutError:
-                results[i] = {"status": "fail", "path": str(files[i]), "error": "TIMEOUT"}
-            except Exception as e:
-                results[i] = {"status": "fail", "path": str(files[i]), "error": repr(e)}
-        return results
+    async def validate_files(self, file_paths: List[str]) -> List[ValidationResult]:
+        """Validate multiple files asynchronously."""
+        tasks = [asyncio.create_task(self.validate_file(path)) for path in file_paths]
+        return await asyncio.gather(*tasks, return_exceptions=True)
+
+    def validate_files_sync(self, file_paths: List[str]) -> List[ValidationResult]:
+        """Synchronous wrapper for validate_files."""
+        return asyncio.run(self.validate_files(file_paths))
