@@ -28,7 +28,7 @@ class ValidationSession:
 
     @staticmethod
     def _validate_core(data: dict[str, Any], config: ValidationConfig) -> list[str]:
-        """Validate core configuration rules."""
+ 
         errors: list[str] = []
 
         try:
@@ -125,7 +125,7 @@ class ValidationSession:
             return [error_msg]
 
     def validate_file(self, file_path: str) -> Dict[str, Any]:
-        """Validate a single file and return a structured result dict."""
+       
         logger.debug(f"Starting validation for file: {file_path}")
         
         try:
@@ -260,6 +260,10 @@ class ValidationSession:
                 "registry": None,
                 "data": None
             }
+
+    
+
+
 
 @dataclass(slots=True)
 class FileResult:

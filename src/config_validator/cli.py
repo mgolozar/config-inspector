@@ -1,21 +1,12 @@
 from __future__ import annotations
 
 import argparse
-import json
 import logging
 from pathlib import Path
-from typing import Any
 
-import yaml
-
-from .core.discovery import Discovery
- 
-from .core.report import aggregate_and_summarize
-from .core.watcher import watch_polling
-from .core.config import load_validation_config
+from .core.validation_service import ValidationService
+from .core.watcher import watch_with_validation_service
 from .utils.logging_setup import configure_logging
-from .storage.strategy_loader import load_storage_strategy
-from .core.validator import ValidationSession
 
 logger = logging.getLogger(__name__)
 
@@ -30,11 +21,6 @@ def _setup_logging(verbose: bool) -> None:
     log_file = str(log_dir / "config-validator.log")
     configure_logging(level, log_file=log_file)
     logger.info(f"Logging level set to: {level}")
-
-
-def load_yaml(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as f:
-        return yaml.safe_load(f) or {}
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -53,82 +39,30 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return p.parse_args(argv)
 
 
-def run_once(
-    root: Path,
-    report_path: Path,
-    config_path: Path = None,
-    storage_config_path: Path = None,
-    replicas_min: int = None,
-    replicas_max: int = None
-) -> dict[str, Any]:
-    # Load validation config (core rules)
-    config = load_validation_config(config_path)
-
-    # Apply CLI overrides
-    if replicas_min is not None:
-        config.replicas_min = replicas_min
-    if replicas_max is not None:
-        config.replicas_max = replicas_max
-
-    # Load storage strategy
-    if storage_config_path is None or not storage_config_path.exists():
-        raise FileNotFoundError(f"Storage config file not found: {storage_config_path}")
-
-    storage_config = load_yaml(storage_config_path)
-    storage_strategy = load_storage_strategy(storage_config)
-
-    # Run discovery
-    discovery = Discovery(root, storage_strategy)
-    files = discovery.discover_yaml_files(root)
-    logger.info("Discovered %d YAML files", len(files))
-    
-    # Run validation
-    # results = [Validator.validate_file(p, config) for p in files]
-
-    session = ValidationSession(config, storage_strategy)
-    results = [session.validate_file(str(p)) for p in files]
-    
-    report = aggregate_and_summarize(results)
-
-    # Save report
-    report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
-    logger.info("Report written to %s", report_path)
-
-    # Human-readable summary
-    print(
-        f"Valid: {report['summary']['valid_count']} Invalid: {report['summary']['invalid_count']} "
-        f"Issues: {report['summary']['total_issues']}\n"
-        f"Registries: {report['summary']['registry_counts']}"
-    )
-
-    return report
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     _setup_logging(args.verbose)
 
+    # Create validation service
+    validation_service = ValidationService(
+        root_path=args.path,
+        report_path=args.report,
+        config_path=args.config,
+        storage_config_path=args.storage_config,
+        replicas_min=args.replicas_min,
+        replicas_max=args.replicas_max,
+    )
+
     if args.watch:
-        run_once(
-            args.path,
-            args.report,
-            args.config,
-            args.storage_config,
-            args.replicas_min,
-            args.replicas_max,
-        )
-        watch_polling(
-            args.path,
-           lambda: print("Watching files...")
- )
+        # Run initial validation
+        validation_service.run_validation()
+        
+        # Start watching for changes with efficient incremental validation
+        watch_with_validation_service(validation_service)
         return 0
     else:
-        run_once(
-            args.path,
-            args.report,
-            args.config,
-            args.storage_config,
-            args.replicas_min,
-            args.replicas_max,
-        )
+        # Run single validation
+        validation_service.run_validation()
         return 0

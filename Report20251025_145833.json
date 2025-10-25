@@ -1,0 +1,55 @@
+{
+  "summary": {
+    "valid_count": 0,
+    "invalid_count": 5,
+    "total_issues": 5,
+    "registry_counts": {}
+  },
+  "files": [
+    {
+      "path": "config\\storage-config.yaml",
+      "valid": false,
+      "errors": [
+        "Failed to read file config\\storage-config.yaml: [Errno 2] No such file or directory: 'config\\\\config\\\\storage-config.yaml'"
+      ],
+      "registry": null,
+      "data": null
+    },
+    {
+      "path": "config\\templates\\storage-config.template.yaml",
+      "valid": false,
+      "errors": [
+        "Failed to read file config\\templates\\storage-config.template.yaml: [Errno 2] No such file or directory: 'config\\\\config\\\\templates\\\\storage-config.template.yaml'"
+      ],
+      "registry": null,
+      "data": null
+    },
+    {
+      "path": "config\\storage\\storage-hdfs.yaml",
+      "valid": false,
+      "errors": [
+        "Failed to read file config\\storage\\storage-hdfs.yaml: [Errno 2] No such file or directory: 'config\\\\config\\\\storage\\\\storage-hdfs.yaml'"
+      ],
+      "registry": null,
+      "data": null
+    },
+    {
+      "path": "config\\storage\\storage-local.yaml",
+      "valid": false,
+      "errors": [
+        "Failed to read file config\\storage\\storage-local.yaml: [Errno 2] No such file or directory: 'config\\\\config\\\\storage\\\\storage-local.yaml'"
+      ],
+      "registry": null,
+      "data": null
+    },
+    {
+      "path": "config\\storage\\storage-s3.yaml",
+      "valid": false,
+      "errors": [
+        "Failed to read file config\\storage\\storage-s3.yaml: [Errno 2] No such file or directory: 'config\\\\config\\\\storage\\\\storage-s3.yaml'"
+      ],
+      "registry": null,
+      "data": null
+    }
+  ]
+}

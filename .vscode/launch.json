@@ -11,7 +11,8 @@
                 "${input:rootPath}",
                 "--report",
                 "${input:reportPath}",
-                "--watch"
+                "--watch",
+                "--verbose"
             ],
             "console": "integratedTerminal",
             "justMyCode": true

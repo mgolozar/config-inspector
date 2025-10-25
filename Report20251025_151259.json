@@ -1,0 +1,101 @@
+{
+  "summary": {
+    "valid_count": 0,
+    "invalid_count": 5,
+    "total_issues": 20,
+    "registry_counts": {}
+  },
+  "files": [
+    {
+      "path": "storage-config.yaml",
+      "valid": false,
+      "errors": [
+        "Missing required keys: ['image', 'replicas', 'service']",
+        "replicas must be an integer between 1 and 50",
+        "image must be a string like registry/service:version",
+        "replicas must be an integer between 1 and 10"
+      ],
+      "registry": null,
+      "data": {
+        "type": "local",
+        "config": {
+          "base_path": "./config"
+        }
+      }
+    },
+    {
+      "path": "templates\\storage-config.template.yaml",
+      "valid": false,
+      "errors": [
+        "Missing required keys: ['image', 'replicas', 'service']",
+        "replicas must be an integer between 1 and 50",
+        "image must be a string like registry/service:version",
+        "replicas must be an integer between 1 and 10"
+      ],
+      "registry": null,
+      "data": {}
+    },
+    {
+      "path": "storage\\storage-hdfs.yaml",
+      "valid": false,
+      "errors": [
+        "Missing required keys: ['image', 'replicas', 'service']",
+        "replicas must be an integer between 1 and 50",
+        "image must be a string like registry/service:version",
+        "replicas must be an integer between 1 and 10"
+      ],
+      "registry": null,
+      "data": {
+        "storage": {
+          "type": "hdfs",
+          "config": {
+            "host": "namenode.example.com",
+            "port": 8020,
+            "user": "hadoop",
+            "base_path": "/data/configs"
+          }
+        }
+      }
+    },
+    {
+      "path": "storage\\storage-local.yaml",
+      "valid": false,
+      "errors": [
+        "Missing required keys: ['image', 'replicas', 'service']",
+        "replicas must be an integer between 1 and 50",
+        "image must be a string like registry/service:version",
+        "replicas must be an integer between 1 and 10"
+      ],
+      "registry": null,
+      "data": {
+        "storage": {
+          "type": "local",
+          "config": {
+            "base_path": "./storage/local"
+          }
+        }
+      }
+    },
+    {
+      "path": "storage\\storage-s3.yaml",
+      "valid": false,
+      "errors": [
+        "Missing required keys: ['image', 'replicas', 'service']",
+        "replicas must be an integer between 1 and 50",
+        "image must be a string like registry/service:version",
+        "replicas must be an integer between 1 and 10"
+      ],
+      "registry": null,
+      "data": {
+        "storage": {
+          "type": "s3",
+          "config": {
+            "bucket_name": "my-configs-bucket",
+            "region": "us-east-1",
+            "prefix": "configs/"
+          }
+        }
+      }
+    }
+  ]
+}

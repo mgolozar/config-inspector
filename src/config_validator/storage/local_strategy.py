@@ -163,15 +163,20 @@ class LocalStrategy(StorageStrategy):
     
     @staticmethod
     def get_yaml_files(root: Path) -> Iterable[Path]:
-        """Yield only YAML files discovered by fast_walk."""
+        """Yield only YAML files discovered by fast_walk, relative to root."""
         for p in LocalStrategy.fast_walk(root):
             if p.suffix.lower() in {'.yml', '.yaml'}:
-                yield p
+                # Return path relative to root
+                try:
+                    yield p.relative_to(root)
+                except ValueError:
+                    # If path is not relative to root, use as-is
+                    yield p
     
     
     def discover_yaml_files(root: Path) -> List[Path]:
         """Discover all YAML files in directory tree."""
-        unique = sorted({p.resolve() for p in LocalStrategy.get_yaml_files(root)})
+        unique = sorted({p for p in LocalStrategy.get_yaml_files(root)})
         return list(unique)  
     def read_file(self, remote_path: str) -> str:
         file_path = self.base_path / remote_path
